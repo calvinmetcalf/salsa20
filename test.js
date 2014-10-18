@@ -1,4 +1,5 @@
-var Salsa20 = require('./').Salsa20;
+var Salsa20Stream = require('./');
+var Salsa20 = Salsa20Stream.Salsa20;
 var test = require('tape');
 // ---------- Test -------------
 var key = new Buffer(32);
@@ -45,5 +46,38 @@ test('build in ones', function (t) {
 	state.getBytes(128);
 	// compare 448..511
 	t.equals(state.getBytes(64).toString('hex'), good[3]);
+	 
+});
+
+test('stream', function (t) {
+	t.plan(4);
+	var stream = new Salsa20Stream(key, nonce);
+	var out = new Buffer('');
+	stream.on('data', function (d) {
+		out = Buffer.concat([out, d]);
+	});
+	var buf = new Buffer(64);
+	buf.fill(0);
+	var buf2 = new Buffer(128);
+	buf.fill(0);
+	stream.write(buf);
+	t.equals(out.toString('hex'), good[0]);
+	// discard 64..191
+	stream.write(buf2);
+	out = new Buffer('');
+	stream.write(buf);
+	// compare 192..255
+	t.equals(out.toString('hex'), good[1]);
+	out = new Buffer('');
+	stream.write(buf);
+	// compare 256..319
+	t.equals(out.toString('hex'), good[2]);
+	out = new Buffer('');
+	// discard 320..447
+	stream.write(buf2);
+	out = new Buffer('');
+	stream.write(buf);
+	// compare 448..511
+	t.equals(out.toString('hex'), good[3]);
 	 
 });
