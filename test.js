@@ -1,8 +1,10 @@
-var Salsa20 = require('./');
+var Salsa20 = require('./').Salsa20;
 var test = require('tape');
 // ---------- Test -------------
-var key = [0x80]; for (i = 1; i < 32; i++) key[i] = 0;
-var nonce = [];   for (i = 0; i < 8; i++) nonce[i] = 0;
+var key = new Buffer(32);
+key[0] = 0x80;
+for (i = 1; i < 32; i++) key[i] = 0;
+var nonce = new Buffer(8);   for (i = 0; i < 8; i++) nonce[i] = 0;
 
 var good = [
     // 0..63
@@ -32,16 +34,16 @@ test('build in ones', function (t) {
 	var state = new Salsa20(key, nonce);
 
 	// compare 0..63
-	t.equals(state.getHexString(64), good[0]);
+	t.equals(state.getBytes(64).toString('hex'), good[0]);
 	// discard 64..191
 	state.getBytes(128);
 	// compare 192..255
-	t.equals(state.getHexString(64),good[1]);
+	t.equals(state.getBytes(64).toString('hex'),good[1]);
 	// compare 256..319
-	t.equals(state.getHexString(64), good[2]);
+	t.equals(state.getBytes(64).toString('hex'), good[2]);
 	// discard 320..447
 	state.getBytes(128);
 	// compare 448..511
-	t.equals(state.getHexString(64), good[3]);
+	t.equals(state.getBytes(64).toString('hex'), good[3]);
 	 
 });

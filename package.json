@@ -25,5 +25,9 @@
   "homepage": "https://github.com/calvinmetcalf/salsa20",
   "devDependencies": {
     "tape": "^3.0.1"
+  },
+  "dependencies": {
+    "inherits": "^2.0.1",
+    "readable-stream": "^1.0.33-1"
   }
 }

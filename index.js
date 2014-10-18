@@ -1,5 +1,33 @@
+var Transform = require('readable-stream').Transform;
+var inherits = require('inherits');
 
-module.exports = Salsa20;
+inherits(Salsa20Stream, Transform);
+module.exports = Salsa20Stream;
+function Salsa20Stream (key, nonce) {
+    if (!(this instanceof Salsa20Stream)) {
+        return new Salsa20Stream(key, nonce);
+    }
+    Transform.call(this);
+    this._salsa = new Salsa20(key, nonce);
+};
+Salsa20Stream.prototype._transform = function (data, _, next) {
+    var out = this._salsa.getBytes(data.length);
+    var i = -1;
+    var len = data.length;
+    while (++i < len) {
+        out[i] = out[i] ^ data[i];
+    }
+    this.push(out);
+    next();
+}
+Salsa20Stream.prototype._flush = function (next) {
+    var buf = new Buffer(32);
+    buf.fill(0);
+    this._salsa.setKey(buf);
+    this._salsa.setNonce(buf.slice(0, 8));
+    next();
+}
+Salsa20Stream.Salsa20 = Salsa20;
 function Salsa20(key, nonce) {
     // Constants.
     this.rounds = 20; // number of Salsa rounds
@@ -44,7 +72,7 @@ Salsa20.prototype.setNonce = function(nonce) {
 
 // getBytes returns the next numberOfBytes bytes of stream.
 Salsa20.prototype.getBytes = function(numberOfBytes) {
-    var out = new Array(numberOfBytes);
+    var out = new Buffer(numberOfBytes);
     for (var i = 0; i < numberOfBytes; i++) {
         if (this.blockUsed == 64) {
             this._generateBlock();
@@ -55,17 +83,6 @@ Salsa20.prototype.getBytes = function(numberOfBytes) {
         this.blockUsed++;
     }
     return out;
-};
-
-Salsa20.prototype.getHexString = function(numberOfBytes) {
-    var hex=['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'];
-    var out = [];
-    var bytes = this.getBytes(numberOfBytes);
-    for(var i = 0; i < bytes.length; i++) {
-        out.push(hex[(bytes[i] >> 4) & 15]);
-        out.push(hex[bytes[i] & 15]);
-    }
-    return out.join('');
 };
 
 // Private methods.
